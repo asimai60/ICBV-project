@@ -43,7 +43,13 @@ def main(image_path):
 
     # Postprocess and save the depth map
     depth_image = postprocess_depth_map(depth_prediction)
-    cv2.imwrite('depth_map.png', depth_image)
+    # cv2.imwrite('depth_map.png', depth_image)
+    cv2.imshow('Depth Map', depth_image)
 
 if __name__ == "__main__":
-    main("b.jpeg")
+    import os
+    for im in os.listdir('bottles'):
+        main(f'bottles/{im}')
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+    # main("bottle pictures/b.jpeg")
