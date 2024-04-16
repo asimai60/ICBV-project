@@ -132,3 +132,4 @@ cv2.imshow('Original Image', cv2.resize(image,desired_shape))
 cv2.imshow('segmented', cv2.resize(segmented_row_by_row,desired_shape))
 
 cv2.waitKey(0)
+
