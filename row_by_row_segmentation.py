@@ -15,7 +15,7 @@ def row_by_row_blacking_like_ray_tracking(img):
 
 def load_and_resize(path):
     image = cv2.imread(path)
-    factor = int(np.round(max(image.shape[0], image.shape[1]) / 1000))
+    factor = int(np.round(max(image.shape[0], image.shape[1]) / 800))
     desired_shape = (image.shape[1]//factor, image.shape[0]//factor)
     image = cv2.resize(image, desired_shape)
     return image
@@ -66,6 +66,13 @@ def vertical_scanning(img, threshold=100):
             stop = True
     return img
 
+def vertical_whiten(img, threshold=0.5):
+    for y in range(20, img.shape[1] - 20):
+        num_black = img.shape[0] - cv2.countNonZero(img[:,y])
+        if num_black/img.shape[0] < threshold:
+            img[:,y] = 255
+    return img
+
 def std_vertical_scanning(img, threshold=100):
     for y in range(2, img.shape[1] - 2):
         black_pxls = np.where(img[:,y] == 0)[0]
@@ -88,6 +95,29 @@ def black_if_many_switches(img):
                 break
     return img
 
+path = 'bottles/13.jpeg'
+image = load_and_resize(path)
+erosed_image = generate_erosion_image(image)
+erosed_image[:,:100] = 255
+erosed_image[:,-100:] = 255
+cv2.imshow('erosed_image', erosed_image)
+erosed_image = cv2.blur(erosed_image, (20,30))
+cv2.imshow('avarage_image', erosed_image)
+erosed_image = cv2.threshold(erosed_image, 127, 255, cv2.THRESH_BINARY)[1]
+cv2.imshow('binary_image', erosed_image)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+row_by_row_mask = cv2.bitwise_not(row_by_row_blacking_like_ray_tracking(erosed_image))
+# row_by_row_mask = keep_largest_blob(row_by_row_mask)
+row_by_row_mask = vertical_filling(row_by_row_mask)
+segmented_row_by_row = cv2.bitwise_and(image,image,mask=row_by_row_mask)
+
+cv2.imshow('segmented', segmented_row_by_row)
+# cv2.imwrite('segmented19.jpeg', segmented_row_by_row)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+exit()
 
 for i in range(2, 20):
     path = 'bottles/' + str(i) + '.jpeg'

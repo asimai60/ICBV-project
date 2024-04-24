@@ -1,1 +1,4 @@
 *.jpeg
+for_show.py
+grayscale.py
+skimage_segment.py

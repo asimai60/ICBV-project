@@ -3,17 +3,34 @@ import numpy as np
 import cv2
 
 
-segmented_image = cv2.imread('cleaned2.jpg')
-gray_image = cv2.cvtColor(segmented_image, cv2.COLOR_BGR2GRAY)
+segmented_13 = cv2.imread('20.jpeg')
+segmented_19 = cv2.imread('segmented19.jpeg')
+gray_image13 = cv2.cvtColor(segmented_13, cv2.COLOR_BGR2GRAY)
+gray_image19 = cv2.cvtColor(segmented_19, cv2.COLOR_BGR2GRAY)
 
-glcm = graycomatrix(gray_image, distances=[1], angles=[0, np.pi/4, np.pi/2, 3*np.pi/4], levels=256, symmetric=True, normed=True)
+glcm13 = graycomatrix(gray_image13, distances=[1], angles=[0, np.pi/4, np.pi/2, 3*np.pi/4], levels=256, symmetric=True, normed=True)
+glcm19 = graycomatrix(gray_image19, distances=[1], angles=[0, np.pi/4, np.pi/2, 3*np.pi/4], levels=256, symmetric=True, normed=True)
 
-contrast = graycoprops(glcm, 'contrast')
-homogenity = graycoprops(glcm, 'homogeneity')
-energy = graycoprops(glcm, 'energy')
-correlation = graycoprops(glcm, 'correlation')
+contrast13 = graycoprops(glcm13, 'contrast')
+homogenity13 = graycoprops(glcm13, 'homogeneity')
+energy13 = graycoprops(glcm13, 'energy')
+correlation13 = graycoprops(glcm13, 'correlation')
 
-print('Contrast: ', contrast)
-print('Homogenity: ', homogenity)
-print('Energy: ', energy)
-print('Correlation: ', correlation)
+
+contrast19 = graycoprops(glcm19, 'contrast')
+homogenity19 = graycoprops(glcm19, 'homogeneity')
+energy19 = graycoprops(glcm19, 'energy')
+correlation19 = graycoprops(glcm19, 'correlation')
+
+
+print('Contrast13: ', contrast13)
+print('Contrast19: ', contrast19)
+
+print('Homogenity13: ', homogenity13)
+print('Homogenity19: ', homogenity19)
+
+print('Energy13: ', energy13)
+print('Energy19: ', energy19)
+
+print('Correlation13: ', correlation13)
+print('Correlation19: ', correlation19)
