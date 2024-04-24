@@ -8,19 +8,20 @@ import matplotlib.patches as patches
 from skimage.draw import circle_perimeter
 
 plt.close('all')
-
-Local_max_Th = 0.8
-LOW_threshold = 35
-HIGH_threshold = 70
-
-
 # Set the directory path
 plastic_path = r'C:\Users\nrhot\Downloads\WhatsApp Unknown 2024-04-24 at 12.53.26\PLASTIC'
 glass_path = r'C:\Users\nrhot\Downloads\WhatsApp Unknown 2024-04-24 at 12.53.26\GLASS'
 
 
-# List all files in the directory
-files = os.listdir(glass_path)
+Local_max_Th = 0.8
+LOW_threshold = 35
+HIGH_threshold = 70
+path = plastic_path
+
+
+
+
+
 
 def load_and_resize(path):
     image = cv2.imread(path)
@@ -185,11 +186,12 @@ def HoughCircles(edge_map, image):
     plotCircles(image, local_maxima, bin_size)
     return local_maxima
 
-
+# List all files in the directory
+files = os.listdir(path)
 # Process each image
 for image_file in files:
     # Construct the full path to the image
-    image_path = os.path.join(glass_path, image_file)
+    image_path = os.path.join(path, image_file)
     print(image_path)
     # Read the image
     image = load_and_resize(image_path)
