@@ -2,9 +2,9 @@ import numpy as np
 import cv2
 import os
 import matplotlib.pyplot as plt
+from skimage import feature
 from scipy.signal import fftconvolve
 from scipy.ndimage import uniform_filter
-import matplotlib.patches as patches
 from skimage.draw import circle_perimeter
 
 plt.close('all')
@@ -13,10 +13,11 @@ plastic_path = r'C:\Users\nrhot\Downloads\WhatsApp Unknown 2024-04-24 at 12.53.2
 glass_path = r'C:\Users\nrhot\Downloads\WhatsApp Unknown 2024-04-24 at 12.53.26\GLASS'
 
 
-Local_max_Th = 0.8
-LOW_threshold = 35
-HIGH_threshold = 70
-path = plastic_path
+Local_max_Th = 1
+LOW_threshold = 45
+HIGH_threshold = 90
+bin_size = 3
+radius = 15
 
 
 
@@ -32,7 +33,6 @@ def load_and_resize(path):
 
 
 def canny(image):
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Apply Gaussian Blurring to reduce noise and improve edge detection
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -40,19 +40,7 @@ def canny(image):
     # Perform Canny edge detection
     edges = cv2.Canny(blurred, LOW_threshold, HIGH_threshold)
     # Display the original image and the edge image
-    plt.figure(figsize=(10, 6))
 
-    plt.subplot(121)  # 1 row, 2 columns, 1st subplot = original image
-    plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-    plt.title('Original Image')
-    plt.axis('off')
-
-    plt.subplot(122)  # 1 row, 2 columns, 2nd subplot = edge image
-    plt.imshow(edges, cmap='gray')
-    plt.title('Edge Image')
-    plt.axis('off')
-
-    plt.show()
     return edges
 
 
@@ -64,13 +52,16 @@ def plotCircles(image, detected_circles, bin_size):
     '''
     fig, ax = plt.subplots(figsize=(5, 5))
     ax.imshow(image, cmap="gray")
-    ax.title.set_text("Detected Circles")
-
+    ax.title.set_text(image_path[70:])
+    mask = np.zeros_like(image)
     for rad, cy, cx in detected_circles:
-        circle_patch = patches.Circle((cx * bin_size, cy * bin_size), radius=rad * bin_size, edgecolor=(0, 1, 0), facecolor='none', linewidth=2)
-        ax.add_patch(circle_patch)
+        cv2.circle(mask, (int(cx * bin_size), int(cy * bin_size)), int(rad * bin_size) + radius, (255, 255, 255), -1)
 
+    mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+    image = cv2.bitwise_and(image, image, mask=mask)
+    plt.imshow(image)
     plt.show()
+    return image
 
 
 def generate_circle_kernels(max_radius):
@@ -162,42 +153,110 @@ def generate_accumulator(edge_map, max_radius, bin_size=1):
 def HoughCircles(edge_map, image):
     # Set the radius, cx and cy range
     height, width = edge_map.shape
-    cx_buckets = width
-    cy_buckets = height
-    max_radius = int(np.sqrt(np.square(height) + np.square(width)) / 2)
-    rad_buckets = max_radius + 1
-    bin_size = 3
+    max_radius = width // 2
 
-    """kernels = generate_circle_kernels(max_radius)
-    accumulator = np.zeros((max_radius, *edge_map.shape))
-    print("starting HoughCircles")
-
-# Use precomputed kernels for convolution
-    for i, kernel in enumerate(kernels):
-        accumulator[i] = fftconvolve(edge_map, kernel, mode='same')"""
     accumulator = generate_accumulator(edge_map, max_radius, bin_size)
-    print("accumolator")
 
     local_maxima = find_global_max(accumulator)
     local_maxima = [local_maxima]
-    print("Local maxima")
 
-    print(type(local_maxima))
-    plotCircles(image, local_maxima, bin_size)
-    return local_maxima
+    masked_image = plotCircles(image, local_maxima, bin_size)
+    return masked_image
 
+
+def feature_extraction(image):
+    # Convert gray image to uint8
+    gray_image = (image * 255).astype(np.uint8)
+    glcm = feature.graycomatrix(gray_image, [1], [0, np.pi / 4, np.pi / 2, 3 * np.pi / 4], levels=256, symmetric=True,
+                                normed=True)
+
+    # Extract properties from GLCM
+    contrast = feature.graycoprops(glcm, 'contrast')
+    dissimilarity = feature.graycoprops(glcm, 'dissimilarity')
+    homogeneity = feature.graycoprops(glcm, 'homogeneity')
+    energy = feature.graycoprops(glcm, 'energy')
+    correlation = feature.graycoprops(glcm, 'correlation')
+    print(f'Contrast: {contrast}')
+    print(f'Dissimilarity: {dissimilarity}')
+    print(f'Homogeneity: {homogeneity}')
+    print(f'Energy: {energy}')
+    print(f'Correlation: {correlation}')
+    data = [contrast, dissimilarity, homogeneity, energy, correlation]
+    return data
+
+
+data = []
+path = plastic_path
 # List all files in the directory
 files = os.listdir(path)
+print("plastic data:")
 # Process each image
 for image_file in files:
     # Construct the full path to the image
     image_path = os.path.join(path, image_file)
-    print(image_path)
     # Read the image
     image = load_and_resize(image_path)
     # Convert the image to grayscale
-    edges = canny(image)
-    print("edges")
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    edges = canny(gray)
+    masked_image = HoughCircles(edges, image)
+    gray_masked = cv2.cvtColor(masked_image, cv2.COLOR_BGR2GRAY)
+    data.append(feature_extraction(gray_masked))
 
-    local_maxima = HoughCircles(edges, image)
+print("glass data")
+path = glass_path
+# List all files in the directory
+files = os.listdir(path)
+for image_file in files:
+    # Construct the full path to the image
+    image_path = os.path.join(path, image_file)
+    # Read the image
+    image = load_and_resize(image_path)
+    # Convert the image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    edges = canny(gray)
+    masked_image = HoughCircles(edges, image)
+    gray_masked = cv2.cvtColor(masked_image, cv2.COLOR_BGR2GRAY)
+    data.append(feature_extraction(gray_masked))
 
+pca_features = data
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+pca_features = np.array(pca_features)
+
+# Third principal component
+
+labels = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])  # Binary labels for simplicity
+print(len(labels) == 26)
+print("plastic avarage:")
+plastic_ava = np.mean(pca_features[:16], axis=0)
+print(plastic_ava)
+print("glass average:")
+glass_ava = np.mean(pca_features[16:], axis=0)
+print(glass_ava)
+
+# Create a color map based on labels
+colors = ['red' if label == 0 else 'blue' for label in labels]  # Red for label 0, blue for label 1
+pca_1 = pca_features[:,:1,:]
+# Create a new figure for 3D plotting
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+pca_1 = np.squeeze(pca_1)
+print(pca_1.shape)
+# Extract individual components
+x = pca_features[:, 1]
+y = pca_features[:, 2]
+z = pca_features[:, 4]
+
+# Plotting data, colored by label
+scatter = ax.scatter(x, y, z, c=colors, marker='o')
+
+# Create a legend (optional)
+red_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=10, label='Label 0')
+blue_patch = plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='blue', markersize=10, label='Label 1')
+plt.legend(handles=[red_patch, blue_patch])
+
+# Title and show
+plt.title('3D PCA Results')
+plt.show()
