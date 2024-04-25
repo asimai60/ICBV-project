@@ -3,8 +3,8 @@ import numpy as np
 import cv2
 
 
-segmented_13 = cv2.imread('20.jpeg')
-segmented_19 = cv2.imread('segmented19.jpeg')
+segmented_13 = cv2.imread('segmented bottoms/10.jpeg')
+segmented_19 = cv2.imread('segmented bottoms/12.jpeg')
 gray_image13 = cv2.cvtColor(segmented_13, cv2.COLOR_BGR2GRAY)
 gray_image19 = cv2.cvtColor(segmented_19, cv2.COLOR_BGR2GRAY)
 
