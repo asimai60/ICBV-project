@@ -30,17 +30,22 @@ def detect_circles(image):
 
 def segment_circles(image, hough_circles):
     mask = np.zeros_like(image)
+    x1, y1, x2, y2 = 0, 0, image.shape[1], image.shape[0]
     if hough_circles is not None:
         hough_circles = np.uint16(np.around(hough_circles))
         for i in hough_circles[0, :]:
             center = (i[0], i[1])
             radius = i[2]
+            x, y = center
+            x1, y1 = x - radius, y - radius
+            x2, y2 = x + radius, y + radius
             cv2.circle(mask, center, radius, (255, 255, 255), -1)
     else:
         mask = 255 * np.ones_like(image)
     
     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
     image = cv2.bitwise_and(image, image, mask=mask)
+    image = image[y1:y2, x1:x2]
     return image
 
 PATH = 'bottom bottles/'
