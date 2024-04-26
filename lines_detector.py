@@ -7,8 +7,11 @@ import matplotlib.pyplot as plt
 plastic_path = r"C:\Users\nrhot\Downloads\WhatsApp Unknown 2024-04-24 at 12.53.26\cropped\plastic"
 glass_path = r'C:\Users\nrhot\Downloads\WhatsApp Unknown 2024-04-24 at 12.53.26\cropped\glass'
 LOW_threshold = 20
-HIGH_threshold = 90
+HIGH_threshold = 70
 threshold = 30
+RHO = 1
+THETA = np.pi/ 45
+LINESTH = 70
 
 
 def plot_circles(circles, image):
@@ -126,7 +129,7 @@ def detect_lines(image):
 
 
     # Use HoughLines to detect lines in the edge map
-    lines = cv2.HoughLines(edges, 1, np.pi / 45, 60)  # These parameters may need adjustment for your specific case
+    lines = cv2.HoughLines(edges, RHO, THETA, LINESTH)  # These parameters may need adjustment for your specific case
 
     # Create a copy of the original image to draw lines on
     result = image.copy()
