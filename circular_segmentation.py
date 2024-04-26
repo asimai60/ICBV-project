@@ -18,20 +18,21 @@ def detect_circles(image):
     min_dist = 200
     param1 = 70
     param2 = 70
-    min_radius = image.shape[0] //8
+    min_radius = image.shape[0] // 8
     max_radius = 0
 
     hough_circles = cv2.HoughCircles(denoised_image, cv2.HOUGH_GRADIENT, dp, min_dist, param1=param1, param2=param2, minRadius=min_radius, maxRadius=max_radius)
     if hough_circles is None:
         param1 = 50
-        param2 =50
+        param2 = 50
         hough_circles = cv2.HoughCircles(denoised_image, cv2.HOUGH_GRADIENT, dp, min_dist, param1=param1, param2=param2, minRadius=min_radius, maxRadius=max_radius)
     return hough_circles
 
 def segment_circles(image, hough_circles):
-    mask = np.zeros_like(image)
+    mask = 255 * np.ones_like(image)
     x1, y1, x2, y2 = 0, 0, image.shape[1], image.shape[0]
     if hough_circles is not None:
+        mask = np.zeros_like(image)
         hough_circles = np.uint16(np.around(hough_circles))
         for i in hough_circles[0, :]:
             center = (i[0], i[1])
@@ -40,8 +41,6 @@ def segment_circles(image, hough_circles):
             x1, y1 = x - radius, y - radius
             x2, y2 = x + radius, y + radius
             cv2.circle(mask, center, radius, (255, 255, 255), -1)
-    else:
-        mask = 255 * np.ones_like(image)
     
     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
     image = cv2.bitwise_and(image, image, mask=mask)
