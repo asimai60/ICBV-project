@@ -1,4 +1,7 @@
-*.jpeg
+bottles/
+bottom bottles/
+Tom bottles/
+
 for_show.py
 grayscale.py
 skimage_segment.py
