@@ -121,11 +121,11 @@ def detect_lines(image):
     y_start = int(h * crop_size)
     y_end = int(h * (1 - crop_size))
 
-    # Crop the image
+    # Crop the image 
     gray_cropped = gray[y_start:y_end, x_start:x_end]
     # Apply edge detection using the Canny edge detector
     edges = canny(gray_cropped)
-
+    edges_full = canny(gray)
 
     # Use HoughLines to detect lines in the edge map
     lines = cv2.HoughLines(edges, RHO, THETA, LINESTH)  # These parameters may need adjustment for your specific case
@@ -178,9 +178,16 @@ def detect_lines(image):
     else:
         print("no lines detected")
         # Show the result
+
+        # hough_circles = cv2.HoughCircles(edges_full, cv2.HOUGH_GRADIENT, 1, 80, param1=50, param2=50, minRadius=100, maxRadius=0)
+        # if hough_circles is not None:
+        #     plot_circles(hough_circles, image)
+        # else:
+        #     print('No circles detected!')
         plt.figure(figsize=(10, 6))
         plt.subplot(121)
         plt.imshow(cv2.cvtColor(edges, cv2.COLOR_BGR2RGB))
+        # plt.imshow(cv2.cvtColor(edges_full, cv2.COLOR_BGR2RGB))
         plt.title('Original Image')
         plt.axis('off')
 
