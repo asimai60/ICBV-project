@@ -2,23 +2,23 @@ import numpy as np
 import cv2
 import os
 import matplotlib.pyplot as plt
-from skimage import feature
+import time
 
-
-plastic_path = r"C:\Users\nrhot\Downloads\WhatsApp Unknown 2024-04-24 at 12.53.26\cropped\plastic"
-glass_path = r'C:\Users\nrhot\Downloads\WhatsApp Unknown 2024-04-24 at 12.53.26\cropped\glass'
+plastic_path = r"C:\Users\nrhot\Downloads\WhatsApp Unknown 2024-04-24 at 12.53.26\cropped\PLAST"
+glass_path = r'C:\Users\nrhot\Downloads\WhatsApp Unknown 2024-04-24 at 12.53.26\cropped\GLASS'
 LOW_threshold = 20
 HIGH_threshold = 70
 threshold = 30
 RHO = 1
 THETA = np.pi/ 45
-LINESTH = 70
+LINESTH = 75
+
 
 
 def plot_circles(circles, image):
     # Convert the (x, y) coordinates and radius of the circles to integers
     circles = np.round(circles[0, :]).astype("int")
-    output =  np.copy(image)# Make a copy of the image
+    output = np.copy(image)  # Make a copy of the image
 
     # Loop over the circles
     for (x, y, r) in circles:
@@ -35,7 +35,6 @@ def plot_circles(circles, image):
 
 def load_and_resize(path):
     image = cv2.imread(path)
-    factor = int(np.round(max(image.shape[0], image.shape[1]) / 1000))
     desired_shape = (480, 480)
     image = cv2.resize(image, desired_shape)
     return image
@@ -62,11 +61,10 @@ def feature_extraction(image):
     return data
 
 
-
 def canny(gray):
     # Apply Gaussian Blurring to reduce noise and improve edge detection
-    blurred = cv2.GaussianBlur(gray, (9, 9), 0)
-    #blurred = cv2.bilateralFilter(gray, 9, 75, 75)
+    blurred = cv2.GaussianBlur(gray, (7, 7), 0)
+    # blurred = cv2.bilateralFilter(gray, 9, 75, 75)
     # Perform Canny edge detection
     edges = cv2.Canny(blurred, LOW_threshold, HIGH_threshold)
     # Display the original image and the edge image
@@ -75,24 +73,24 @@ def canny(gray):
 
 def polar_to_cartesian(rho, theta):
     """ Convert polar coordinates to Cartesian 'Ax + By = C' format. """
-    A = np.cos(theta)
-    B = np.sin(theta)
-    C = rho
-    return A, B, C
+    a = np.cos(theta)
+    b = np.sin(theta)
+    c = rho
+    return a, b, c
 
 
 def intersection_point(line1, line2):
     """ Find intersection point of two lines given in 'Ax + By = C' format. """
     A1, B1, C1 = line1
     A2, B2, C2 = line2
-    determinant = A1*B2 - A2*B1
+    determinant = A1 * B2 - A2 * B1
     if determinant == 0:
         # Lines are parallel
         return None
     else:
-        x = (B2*C1 - B1*C2) / determinant
-        y = (A1*C2 - A2*C1) / determinant
-        return (x, y)
+        x = (B2 * C1 - B1 * C2) / determinant
+        y = (A1 * C2 - A2 * C1) / determinant
+        return x, y
 
 
 def find_intersections(lines):
@@ -136,7 +134,7 @@ def detect_lines(image):
     result = image.copy()
 
     if lines is not None:
-        cartesian_lines = [polar_to_cartesian(rho, theta) for rho, theta in lines[:,0]]
+        """cartesian_lines = [polar_to_cartesian(rho, theta) for rho, theta in lines[:,0]]
         intersections = find_intersections(cartesian_lines)
         if intersections:
             max_point = max(intersections, key=intersections.get)
@@ -151,7 +149,7 @@ def detect_lines(image):
             print("Maximum value is at point:", max_point)
             print("Number of lines intersecting:", max_value)
         else:
-            print("no interesting lines")
+            print("no interesting lines")"""
         for rho, theta in lines[:, 0]:
             a = np.cos(theta)
             b = np.sin(theta)
@@ -164,7 +162,7 @@ def detect_lines(image):
             cv2.line(result, (x1, y1), (x2, y2), (0, 0, 255), 2)
 
         # Show the result
-        plt.figure(figsize=(10, 6))
+        """plt.figure(figsize=(10, 6))
         plt.subplot(121)
         plt.imshow(cv2.cvtColor(edges, cv2.COLOR_BGR2RGB))
         plt.title('Original Image')
@@ -175,7 +173,8 @@ def detect_lines(image):
         plt.title('Detected Lines')
         plt.axis('off')
 
-        plt.show()
+        plt.show()"""
+        return True
     else:
         print("no lines detected")
         # Show the result
@@ -198,12 +197,15 @@ def detect_lines(image):
         plt.axis('off')
 
         plt.show()
+        return False
 
 
 
-
-def main(path):
+def main(path, label):
     files = os.listdir(path)
+    amuont = len(files)
+    not_detected = 0
+    correct = 0
     # Process each image
     for image_file in files:
         # Construct the full path to the image
@@ -211,23 +213,34 @@ def main(path):
         # Read the image
         image = load_and_resize(image_path)
         gray_masked = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        gray_masked = canny(gray_masked)
         shape = gray_masked.shape[0]
         lines = detect_lines(image)
-        """circles = cv2.HoughCircles(gray_masked, cv2.HOUGH_GRADIENT, 1, 15, param1=50, param2=50, minRadius=1, maxRadius=shape//8)
-        # If at least one circle is detected
-        if circles is not None:
-            plot_circles(circles, image)
+        if not lines:
+            if label == "glass":
+                correct = correct + 1
+            not_detected += 1
+
         else:
-            print('No circles detected!')"""
+            if label == "plastic":
+                correct = correct + 1
+        time.sleep(2)
+
+    return not_detected / amuont * 100, correct
 
 
 
-
-print("glass data")
-main(glass_path)
 print("plastic data:")
-main(plastic_path)
+plastic, prate = main(plastic_path, "plastic")
+print("glass data")
+glass , pglass= main(glass_path, "glass")
+
+print("plastic:" ,plastic)
+print("glass:", glass)
+print("prate:", prate)
+print("pglass:", pglass)
+print("succses rate", (prate + pglass) / 35 *100)
+
+
 
 
 
