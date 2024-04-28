@@ -10,7 +10,7 @@ def load_and_convert(image_path):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 # Load the reference pattern image
-pattern_img = load_and_convert('ridge patterns/template_ridge.jpeg')
+pattern_img = load_and_convert('cropped ridge patterns/template_ridge.jpeg')
 
 # Initialize SIFT detector
 sift = cv2.SIFT_create()
@@ -19,7 +19,7 @@ sift = cv2.SIFT_create()
 pattern_kp, pattern_des = sift.detectAndCompute(pattern_img, None)
 
 # List of target images
-target_images = [f'ridge patterns/{path}' for path in os.listdir('ridge patterns')]
+target_images = [f'cropped ridge patterns/{path}' for path in os.listdir('cropped ridge patterns')]
 similarity_scores = []
 
 # Matcher using FLANN based matcher

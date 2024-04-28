@@ -54,6 +54,8 @@ for im in os.listdir(PATH):
     image = load_image(f'{PATH}{im}')
     hough_circles = detect_circles(image)
     segmented_image = segment_circles(image, hough_circles)
+    standard_size = (480, 480)
+    segmented_image = cv2.resize(segmented_image, standard_size)
     cv2.imshow(f'Detected Circles in {im}', segmented_image)
     cv2.imwrite(f'segmented bottoms/{im}', segmented_image)
     cv2.waitKey(0)

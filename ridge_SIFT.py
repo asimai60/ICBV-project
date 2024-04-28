@@ -1,33 +1,37 @@
 import cv2
 import numpy as np
+import os
 
 # Load images
-img1 = cv2.imread('ridge patterns/template_ridge.jpeg', cv2.IMREAD_GRAYSCALE)  # Query image
-img2 = cv2.imread('ridge patterns/20_ridge.jpeg', cv2.IMREAD_GRAYSCALE)   # Train image
+img1 = cv2.imread('cropped ridge patterns/template_ridge.jpeg', cv2.IMREAD_GRAYSCALE)  # Query image
 
-if img1 is None or img2 is None:
-    raise ValueError("One of the images didn't load. Check the file path and file integrity.")
+for im_path in os.listdir('cropped ridge patterns'):
+    
+    img2 = cv2.imread(f'cropped ridge patterns/{im_path}', cv2.IMREAD_GRAYSCALE)   # Train image
 
-# Initialize SIFT detector
-sift = cv2.SIFT_create()
+    if img1 is None or img2 is None:
+        raise ValueError("One of the images didn't load. Check the file path and file integrity.")
 
-# Find the keypoints and descriptors with SIFT
-kp1, des1 = sift.detectAndCompute(img1, None)
-kp2, des2 = sift.detectAndCompute(img2, None)
+    # Initialize SIFT detector
+    sift = cv2.SIFT_create()
 
-# Create BFMatcher object
-bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
+    # Find the keypoints and descriptors with SIFT
+    kp1, des1 = sift.detectAndCompute(img1, None)
+    kp2, des2 = sift.detectAndCompute(img2, None)
 
-# Match descriptors
-matches = bf.match(des1, des2)
+    # Create BFMatcher object
+    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
 
-# Sort them in the order of their distance
-matches = sorted(matches, key=lambda x: x.distance)
+    # Match descriptors
+    matches = bf.match(des1, des2)
 
-# Draw first 10 matches
-img_matches = cv2.drawMatches(img1, kp1, img2, kp2, matches[:10], None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+    # Sort them in the order of their distance
+    matches = sorted(matches, key=lambda x: x.distance)
 
-# Display the results
-cv2.imshow('Matches', img_matches)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+    # Draw first 10 matches
+    img_matches = cv2.drawMatches(img1, kp1, img2, kp2, matches[:10], None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+
+    # Display the results
+    cv2.imshow('Matches', img_matches)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
