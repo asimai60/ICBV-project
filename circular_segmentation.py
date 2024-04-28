@@ -5,7 +5,7 @@ import os
 def load_image(path, max_size=800):
     image = cv2.imread(path)
     factor = int(np.round(max(image.shape[0], image.shape[1]) / max_size))
-    desired_shape = (image.shape[1]//factor, image.shape[0]//factor)
+    desired_shape = (image.shape[1]//factor, image.shape[0]//factor) if factor > 1 else image.shape[:2]
     image = cv2.resize(image, desired_shape)
     return image
 
@@ -32,6 +32,7 @@ def segment_circles(image, hough_circles):
     mask = 255 * np.ones_like(image)
     x1, y1, x2, y2 = 0, 0, image.shape[1], image.shape[0]
     if hough_circles is not None:
+        
         mask = np.zeros_like(image)
         hough_circles = np.uint16(np.around(hough_circles))
         for i in hough_circles[0, :]:
@@ -44,7 +45,8 @@ def segment_circles(image, hough_circles):
     
     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
     image = cv2.bitwise_and(image, image, mask=mask)
-    image = image[y1:y2, x1:x2]
+    image = image[y1:y2, x1:x2] if x1 < x2 and y1 < y2 else image
+
     return image
 
 PATH = 'bottom bottles/'

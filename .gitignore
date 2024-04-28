@@ -2,3 +2,5 @@
 for_show.py
 grayscale.py
 skimage_segment.py
+features.py
+circle_eraser.py
