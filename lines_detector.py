@@ -7,8 +7,8 @@ from scipy.signal import fftconvolve
 from scipy.ndimage import uniform_filter
 from skimage.draw import circle_perimeter
 
-plastic_path = r"C:\Users\nrhot\Downloads\WhatsApp Unknown 2024-04-24 at 12.53.26\cropped\PLAST"
-glass_path = r'C:\Users\nrhot\Downloads\WhatsApp Unknown 2024-04-24 at 12.53.26\cropped\GLASS'
+plastic_path = 'Tom bottles/plastic cropped'
+glass_path = 'Tom bottles/glass cropped'
 LOW_threshold = 20
 HIGH_threshold = 70
 threshold = 30
@@ -144,7 +144,7 @@ def detect_lines(image):
             cv2.line(result, (x1, y1), (x2, y2), (0, 0, 255), 2)
 
         # Show the result
-        """plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(10, 6))
         plt.subplot(121)
         plt.imshow(cv2.cvtColor(edges, cv2.COLOR_BGR2RGB))
         plt.title('Original Image')
@@ -155,7 +155,7 @@ def detect_lines(image):
         plt.title('Detected Lines')
         plt.axis('off')
 
-        plt.show()"""
+        plt.show()
         return True
     else:
         return False
