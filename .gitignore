@@ -1,6 +1,6 @@
-bottles/
-bottom bottles/
-Tom bottles/
+*.jpeg
+
+**/*.jpeg
 
 for_show.py
 grayscale.py
