@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import os
-import matplotlib.pyplot as plt
 import time
 from scipy.signal import fftconvolve
 from scipy.ndimage import uniform_filter
@@ -37,22 +36,6 @@ def canny(gray):
     return edges
 
 
-def detect_lines(image):
-    # Convert the image to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    h, w = image.shape[:2]
-    # Apply edge detection using the Canny edge detector
-    edges = canny(gray)
-    mask = np.zeros_like(edges)
-    inner_circle = cv2.circle(mask, (w//2, h//2), (h//2 - h//8)+1, (255),-1)
-    edges = cv2.bitwise_and(edges, inner_circle)
-    # Use HoughLines to detect lines in the edge map
-    lines = cv2.HoughLines(edges, RHO, THETA, LINESTH)  # These parameters may need adjustment for your specific case
-    # Create a copy of the original image to draw lines on
-    result = image.copy()
-    return lines is not None
-
-
 def canny2(gray):
     # Apply Gaussian Blurring to reduce noise and improve edge detection
     center = gray.shape[0]//2
@@ -63,6 +46,20 @@ def canny2(gray):
                                             cv2.THRESH_BINARY, 11, 2)
     edges = cv2.Canny(adaptive_thresh, LOW2_threshold, HIGH2_threshold)
     return edges
+
+
+def detect_lines(image):
+    # Convert the image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    h, w = image.shape[:2]
+    # Apply edge detection using the Canny edge detector
+    edges = canny(gray)
+    mask = np.zeros_like(edges)
+    inner_circle = cv2.circle(mask, (w//2, h//2), (h//2 - h//8)+1, (255),-1)
+    edges = cv2.bitwise_and(edges, inner_circle)
+    # Use HoughLines to detect lines in the edge map
+    lines = cv2.HoughLines(edges, RHO, THETA, LINESTH)
+    return lines is not None
 
 
 def generate_accumulator(edge_map, max_radius, bin_size=1):
@@ -100,16 +97,13 @@ def generate_accumulator(edge_map, max_radius, bin_size=1):
 def find_local_maxima(accumulator, threshold=0.5, neighborhood_size=3):
     threshold_abs = threshold * np.max(accumulator)
     local_maxima = np.zeros_like(accumulator, dtype=bool)
-
     # Iterate over each pixel in the accumulator
     for index, value in np.ndenumerate(accumulator):
         if value >= threshold_abs:
             # Define the neighborhood boundaries
             min_bound = np.maximum(np.subtract(index, (neighborhood_size // 2,)*len(index)), 0)
             max_bound = np.minimum(np.add(index, (neighborhood_size // 2 + 1,)*len(index)), accumulator.shape)
-
             neighborhood = accumulator[min_bound[0]:max_bound[0], min_bound[1]:max_bound[1]]
-
             # Check if the current pixel is the maximum within its neighborhood
             if value == np.max(neighborhood):
                 local_maxima[index] = True
@@ -117,30 +111,18 @@ def find_local_maxima(accumulator, threshold=0.5, neighborhood_size=3):
     return peaks_indices
 
 
-def HoughCircles(image, path):
-    # Set the radius, cx and cy range
+def HoughCircles(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     edge_map = canny2(gray)
     height, width = edge_map.shape
     max_radius = width // 2
-
     accumulator = generate_accumulator(edge_map, max_radius, bin_size)
     local_maxima = find_local_maxima(accumulator, Local_max_Th)
-    print(local_maxima)
     # Create a condition where the second and third columns are not both 81
     mask = ~(local_maxima[:, 1] == 81) | ~(local_maxima[:, 2] == 81)
 
     # Apply the mask to 'local_maxima' to filter out the unwanted row
     local_maxima = local_maxima[mask]
-    """local_maxima = cv2.HoughCircles(edge_map, cv2.HOUGH_GRADIENT, 3, minDist=20,
-                                    param1=150, param2=60, minRadius=0, maxRadius=max_radius)
-    print(local_maxima)
-    # Assuming local_maxima is a numpy array
-    mask = ~((local_maxima[:, 1] == 81) & (local_maxima[:, 2] == 81))
-
-    # Apply the mask to 'local_maxima' to filter out the unwanted rows
-    local_maxima = local_maxima[mask]"""
-
     return local_maxima
 
 
@@ -158,8 +140,8 @@ def main(path, label):
         lines = detect_lines(image)
         amount += 1
         if not lines:
-            circls = HoughCircles(image,image_path)
-            if circls.any():
+            circles = HoughCircles(image)
+            if circles.any():
                 if label == "glass":
                     correct = correct + 1
                     print(image_path)
@@ -167,8 +149,6 @@ def main(path, label):
                     print("found_circles", image_path[70:])
             else:
                 if label == "plastic":
-                    print("circls is good")
-                    print(image_path)
                     correct = correct + 1
                 else:
                     print("didnt found circles", image_path[70:])
@@ -186,15 +166,14 @@ def main(path, label):
 
 
 
+print("plastic data:")
+amount_p, prate = main(plastic_path, "plastic")
 print("glass data")
 amount_g , pglass= main(glass_path, "glass")
 
-print("plastic data:")
-amount_p, prate = main(plastic_path, "plastic")
 print("prate:", prate)
 print("pglass:", pglass)
 amount = amount_g + amount_p
 print("Total amount:", amount)
 print("succses rate", (prate + pglass) / amount * 100)
-
 
