@@ -248,51 +248,54 @@ def find_local_maxima(accumulator, threshold=0.5, neighborhood_size=3):
 
 
 def main(path, label):
-    files = os.listdir(path)
-    amuont = len(files)
-    not_detected = 0
-    correct = 0
-    # Process each image
-    for image_file in files:
-        # Construct the full path to the image
-        image_path = os.path.join(path, image_file)
-        # Read the image
-        image = load_and_resize(image_path)
-        lines = detect_lines(image)
-        if not lines:
-            circls = HoughCircles(image,image_path)
-            if circls.any():
-                print("found_circles")
-                if label == "glass":
-                    correct = correct + 1
-                else:
-                    print(image_path[70:])
-            else:
-                if label == "plastic":
-                    correct = correct + 1
-                else:
-                    print(image_path[70:])
+    image = load_and_resize('bottom bottles/33.jpeg')
+    lines = detect_lines(image)
+    
+    # files = os.listdir(path)
+    # amuont = len(files)
+    # not_detected = 0
+    # correct = 0
+    # # Process each image
+    # for image_file in files:
+    #     # Construct the full path to the image
+    #     image_path = os.path.join(path, image_file)
+    #     # Read the image
+    #     image = load_and_resize(image_path)
+    #     lines = detect_lines(image)
+    #     if not lines:
+    #         circls = HoughCircles(image,image_path)
+    #         if circls.any():
+    #             print("found_circles")
+    #             if label == "glass":
+    #                 correct = correct + 1
+    #             else:
+    #                 print(image_path[70:])
+    #         else:
+    #             if label == "plastic":
+    #                 correct = correct + 1
+    #             else:
+    #                 print(image_path[70:])
 
-            not_detected += 1
+    #         not_detected += 1
 
-        else:
-            if label == "plastic":
-                correct = correct + 1
-            else:
-                print(image_path[70:])
-    time.sleep(2)
+    #     else:
+    #         if label == "plastic":
+    #             correct = correct + 1
+    #         else:
+    #             print(image_path[70:])
+    # time.sleep(2)
 
-    return amuont, correct
+    # return amuont, correct
 
 
-
-print("glass data")
-amount_g , pglass= main(glass_path, "glass")
-print("plastic data:")
-amount_p, prate = main(plastic_path, "plastic")
-print("prate:", prate)
-print("pglass:", pglass)
-print("succses rate", (prate + pglass) / (amount_g + amount_p) * 100)
+main('','')
+# print("glass data")
+# amount_g , pglass= main(glass_path, "glass")
+# print("plastic data:")
+# amount_p, prate = main(plastic_path, "plastic")
+# print("prate:", prate)
+# print("pglass:", pglass)
+# print("succses rate", (prate + pglass) / (amount_g + amount_p) * 100)
 
 
 
