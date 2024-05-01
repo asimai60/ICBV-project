@@ -22,10 +22,13 @@ def update_image_display(image_path):
 def classify_image(filepath):
     image = cv2.imread(filepath)
     classification = full_system(image)
-    label_result.config(text=f"Classification: {classification}", fg="green", font=('Helvetica', 12, 'bold'))
+    if classification.lower() == 'unknown':
+        label_result.config(text=f"Classification: {classification}", fg="red", font=('Helvetica', 12, 'bold'))
+    else:
+        label_result.config(text=f"Classification: {classification}", fg="green", font=('Helvetica', 12, 'bold'))
 
 def open_file():
-    filepath = filedialog.askopenfilename(filetypes=[("JPEG Images", "*.jpeg")])
+    filepath = filedialog.askopenfilename(filetypes=[("JPEG/JPG Images", "*.jpeg;*.jpg")])
     if not filepath:
         return
     show_frame(frame_single)
@@ -44,7 +47,7 @@ def open_directory():
     directory_path = filedialog.askdirectory()
     if not directory_path:
         return
-    files = [f for f in os.listdir(directory_path) if f.lower().endswith('.jpeg')]
+    files = [f for f in os.listdir(directory_path) if f.lower().endswith(('.jpeg', '.jpg'))]
     if not files:
         messagebox.showinfo("Info", "No JPEG images found in the selected directory.")
         return
