@@ -116,6 +116,8 @@ def full_system(im, offline=False, skip_circle=False):
                 number = len(os.listdir(PATH_SAVE_CIRCLES)) + 1
                 cv2.imwrite(f'{PATH_SAVE_CIRCLES}/circles{number}.jpeg', segmented_image)
                 return "glass"
+            else:
+                return "plastic"
             
     return "unknown"
 
