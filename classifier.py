@@ -6,19 +6,25 @@ import sys
 from circular_segmentation import crop_bottom
 from glass_circles_Tom import HoughCircles
 
-
+RESULT_DIRECTORY = "image outputs"
 LOW_threshold = 20
 HIGH_threshold = 70
 threshold = 30
 RHO = 1
 THETA = np.pi/ 45
 LINESTH = 75
+DEBUG = True
 
-def load_and_resize(path):
-    image = cv2.imread(path)
-    desired_shape = (480, 480)
-    image = cv2.resize(image, desired_shape)
-    return image
+def DEBUG_SAVE(image, directory):
+    """
+    Save an image to the result directory for debugging and presenting purposes.
+    """
+    if DEBUG:
+        PATH = f'{RESULT_DIRECTORY}/{directory}'
+        if not os.path.exists(PATH):
+            os.makedirs(PATH)
+        number = len(os.listdir(PATH)) + 1
+        cv2.imwrite(f'{PATH}/{number}.jpeg', image)
 
 def canny(gray):
     blurred = cv2.GaussianBlur(gray, (7, 7), 0)
@@ -31,16 +37,13 @@ def detect_lines(image):
     h, w = image.shape[:2]
     edges = canny(gray)
     mask = np.zeros_like(edges)
+    full_edges = edges.copy()
     inner_circle = cv2.circle(mask, (w//2, h//2), (h//2 - h//8)+1, (255),-1)
-    edges = cv2.bitwise_and(edges, inner_circle)
-    EDGE_PATH = 'server/edges'
-    if not os.path.exists(EDGE_PATH):
-        os.makedirs(EDGE_PATH)
-    number = len(os.listdir(EDGE_PATH)) + 1
-    cv2.imwrite(f'{EDGE_PATH}/edges{number}.jpeg', edges)
-    
-    edges_full = canny(gray)
 
+    edges = cv2.bitwise_and(edges, inner_circle)
+
+    
+    DEBUG_SAVE(full_edges, 'edges')
 
     lines = cv2.HoughLines(edges, RHO, THETA, LINESTH) 
     result = image.copy()
@@ -57,25 +60,10 @@ def detect_lines(image):
             y2 = int(y0 - 1000 * (a))
             cv2.line(result, (x1, y1), (x2, y2), (0, 0, 255), 2)
 
-        # cv2.imshow('Original Image', edges)
-        # cv2.imshow('Detected Lines', result)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
-
-        PATH = 'server/detected lines'
-        if not os.path.exists(PATH):
-            os.makedirs(PATH)
-        number = len(os.listdir(PATH)) + 1
-        cv2.imwrite(f'{PATH}/detected{number}.jpeg', result)
+        DEBUG_SAVE(result, 'detected lines')
 
         return True, len(lines)
     else:
-        #print("no lines detected")
-
-        # cv2.imshow('Original Image', edges_full)
-        # cv2.imshow('Detected Lines', result)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
         return False, None
 
 def crop_ridge_band(image):
@@ -88,15 +76,12 @@ def full_system(im, offline=False, skip_circle=False):
         im = cv2.imread(im)
     segmented_image, was_segmented = crop_bottom(im)
     if segmented_image is not None:
-        SAVE_PATH = 'server/OCI'
-        if not os.path.exists(SAVE_PATH):
-            os.makedirs(SAVE_PATH)
-        number = len(os.listdir(SAVE_PATH)) + 1
-        cv2.imwrite(f'{SAVE_PATH}/cropped{number}.jpeg', segmented_image)
+
+        DEBUG_SAVE(segmented_image, 'segmented images')
+
     if was_segmented:
         lines, num = detect_lines(segmented_image)
         if lines and num > 0:
-            # print(f"Detected {num} lines")
             return "plastic"
         
         else:
@@ -105,16 +90,19 @@ def full_system(im, offline=False, skip_circle=False):
             
             circle_list = HoughCircles(segmented_image)
             if circle_list is not None:
+                if len(circle_list) == 0:
+                    return "plastic"
+                max_r = max(circle_list, key=lambda x: x[2])[2]
+                if max_r < 1:
+                    return "plastic"
                 for i in circle_list:
                     x = i[0] * 3
                     y = i[1] * 3
                     r = i[2] * 3
                     cv2.circle(segmented_image, (x,y), r, (0, 255, 0), 2)
-                PATH_SAVE_CIRCLES = 'server/circles'
-                if not os.path.exists(PATH_SAVE_CIRCLES):
-                    os.makedirs(PATH_SAVE_CIRCLES)
-                number = len(os.listdir(PATH_SAVE_CIRCLES)) + 1
-                cv2.imwrite(f'{PATH_SAVE_CIRCLES}/circles{number}.jpeg', segmented_image)
+                    
+                DEBUG_SAVE(segmented_image, 'detected circles')
+
                 return "glass"
             else:
                 return "plastic"
